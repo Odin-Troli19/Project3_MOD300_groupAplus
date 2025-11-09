@@ -244,19 +244,36 @@ class Sphere:
 
 def generate_random_points(box: SimulationBox, n_points: int) -> np.ndarray:
     """
-    Generate random points uniformly distributed in the simulation box.
+    We created this function to generate many random points inside our simulation box.
+    This is like throwing darts randomly into a box - each dart lands at a random position.
     
-    Parameters:
-        box: SimulationBox object defining the boundaries
-        n_points: Number of random points to generate
+    This is the core of our Monte Carlo method: we throw random points and check
+    how many land inside the DNA spheres. From this, we can calculate the DNA volume.
+    
+    Parameters (what we give to the function):
+        box: The SimulationBox object that defines our 3D space
+        n_points: How many random points we want to create
         
-    Returns:
-        Array of shape (n_points, 3) with [x, y, z] coordinates
+    Returns (what the function gives back):
+        A numpy array with shape (n_points, 3)
+        Each row contains [x, y, z] coordinates for one random point
+        
+    Example: If n_points = 1000, we get 1000 random points, each with x, y, z coordinates
     """
+    # Generate n_points random x coordinates between box.x_min and box.x_max
+    # np.random.uniform creates random numbers that are equally likely anywhere
+    # in the range (this is called "uniform distribution")
     x_points = np.random.uniform(box.x_min, box.x_max, n_points)
+
+    # Generate n_points random y coordinates between box.y_min and box.y_max
     y_points = np.random.uniform(box.y_min, box.y_max, n_points)
+
+    # Generate n_points random z coordinates between box.z_min and box.z_max
     z_points = np.random.uniform(box.z_min, box.z_max, n_points)
     
+    # Combine the x, y, z coordinates into one array
+    # np.column_stack puts the three arrays side by side as columns
+    # Result: [[x₁, y₁, z₁], [x₂, y₂, z₂], [x₃, y₃, z₃], ...]
     return np.column_stack([x_points, y_points, z_points])
 
 
@@ -264,24 +281,37 @@ def create_random_sphere(box: SimulationBox,
                         min_radius: float = 1.0, 
                         max_radius: float = 5.0) -> Sphere:
     """
-    Create a sphere with random position and size within the box.
+    We created this function to make a sphere with random position and random size.
+    This is useful for testing our Monte Carlo code with simple spheres before
+    moving to real DNA data.
     
-    Parameters:
-        box: SimulationBox where sphere should be placed
-        min_radius: Minimum sphere radius (Angstrom)
-        max_radius: Maximum sphere radius (Angstrom)
+    Parameters (what we give to the function):
+        box: The SimulationBox where we want to place the sphere
+        min_radius: The smallest radius the sphere can have (default = 1.0 Angstrom)
+        max_radius: The largest radius the sphere can have (default = 5.0 Angstrom)
         
-    Returns:
-        Sphere object with random position and radius
+    Returns (what the function gives back):
+        A new Sphere object with random position and random size
+        
+    Note: The "= 1.0" and "= 5.0" are default values. If we don't specify min_radius
+    and max_radius when calling the function, it will use these values automatically.
     """
-    # Generate random position
+    # Generate a random x position anywhere inside the box
+    # np.random.uniform picks a random number between x_min and x_max
     x = np.random.uniform(box.x_min, box.x_max)
+
+    # Generate a random y position anywhere inside the box
     y = np.random.uniform(box.y_min, box.y_max)
+
+    # Generate a random z position anywhere inside the box
     z = np.random.uniform(box.z_min, box.z_max)
     
-    # Generate random radius
+    # Generate a random radius between min_radius and max_radius
+    # This determines how big the sphere will be
     radius = np.random.uniform(min_radius, max_radius)
     
+    # Create and return a new Sphere object with the random values we generated
+    # We don't specify atom_type, so it will be None
     return Sphere(x, y, z, radius)
 
 
