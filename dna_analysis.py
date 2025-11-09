@@ -34,13 +34,13 @@ class SimulationBox:
             z_range: A pair of numbers (min, max) telling us the box size in z direction
         
         """
-        # We store the minimum and maximum positions for each direction
+        # We store the min and max positions for each direction
         # This tells us where the walls of our box are located
         self.x_min, self.x_max = x_range # Unpack the x boundaries
         self.y_min, self.y_max = y_range # Unpack the y boundaries
         self.z_min, self.z_max = z_range # Unpack the z boundaries
         
-         # We calculate how wide the box is in each direction
+        # We calculate how wide the box is in each direction
         # This is simply: maximum position minus minimum position
         self.x_size = self.x_max - self.x_min # Width of box in x direction
         self.y_size = self.y_max - self.y_min # Width of box in y direction
@@ -65,3 +65,5 @@ class SimulationBox:
                 f"y=[{self.y_min:.2f}, {self.y_max:.2f}], "
                 f"z=[{self.z_min:.2f}, {self.z_max:.2f}], "
                 f"Volume={self.volume:.2f} Å³)")
+    
+
