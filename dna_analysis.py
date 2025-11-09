@@ -319,9 +319,9 @@ def count_points_in_spheres(points: np.ndarray,
                             spheres: List[Sphere]) -> int:
     """
     We created this function to count how many random points are inside any of the spheres.
-    This is the key step in our Monte Carlo method for calculating volume!
+    This is the key step in our Monte Carlo method for calculating volume.
     
-    How it works:
+    How it is suppose to work:
     1. We look at each random point one by one
     2. For each point, we check if it's inside any of the spheres
     3. If a point is inside at least one sphere, we count it (only once)
@@ -375,10 +375,10 @@ def count_points_in_spheres(points: np.ndarray,
     # Return the total number of points we found inside the spheres
     return n_inside
 
-# Took inspiration from the function 
-# Minimal MC hit-and-miss (from class-004)
-# def monte_carlo_volume(from class-004)
-# Where found: MC_area_volume_central_theorem.ipynb cells 3-5; class-004 slide "MC4all"
+# We took inspiration from the Monte Carlo function shown in class
+# Source: MC_area_volume_central_theorem.ipynb (cells 3-5) from class-004
+# The teacher showed us a basic "hit-and-miss" Monte Carlo method
+# We adapted that idea to work with our DNA spheres
 
 def monte_carlo_volume(box: SimulationBox, 
                        spheres: List[Sphere], 
