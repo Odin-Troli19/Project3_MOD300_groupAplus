@@ -105,19 +105,12 @@ class Sphere:
     
     def __init__(self, x: float, y: float, z: float, 
                  radius: float, atom_type: Optional[str] = None):
-        """
-        Initialize a sphere.
         
-        Parameters:
-            x, y, z: Center coordinates in Angstrom
-            radius: Sphere radius in Angstrom
-            atom_type: Optional atom type (e.g., 'H', 'O', 'C')
-        """
         """
         We created this initialization function to set up a new sphere.
         When we create a sphere, we need to tell it where it is and how big it is.
         
-        Parameters (what information we give to create the sphere):
+        Parameters:
             x, y, z: Three numbers that tell us where the center of the sphere is located
                      - x: left/right position
                      - y: front/back position  
@@ -157,23 +150,19 @@ class Sphere:
 
 class Sphere:
     """
-    Represents a sphere in 3D space (e.g., an atom).
+    We created this class to represent a sphere (a perfect ball shape) in 3D space.
+    In our project, each sphere represents one atom in the DNA molecule.
     
-    Attributes:
-        x, y, z: Center coordinates (Angstrom)
-        radius: Sphere radius (Angstrom)
-        atom_type: Optional atom type identifier
+    This class stores information about:
+        x, y, z: The position of the sphere's center in 3D space (in Angstrom units)
+        radius: How big the sphere is (in Angstrom)
+        atom_type: What kind of atom this sphere represents
     """
     
     def __init__(self, x: float, y: float, z: float, 
                  radius: float, atom_type: Optional[str] = None):
         """
-        Initialize a sphere.
-        
-        Parameters:
-            x, y, z: Center coordinates in Angstrom
-            radius: Sphere radius in Angstrom
-            atom_type: Optional atom type (e.g., 'H', 'O', 'C')
+        We created this initialization function to set up a new sphere.
         """
         self.x = x
         self.y = y
@@ -184,25 +173,71 @@ class Sphere:
     def is_point_inside(self, point_x: float, point_y: float, 
                        point_z: float) -> bool:
         """
-        Check if a point is inside the sphere.
+        We created this function to check if a random point is inside this sphere or not.
         
-        Parameters:
-            point_x, point_y, point_z: Coordinates of point to test
+        How it works:
+        1. We calculate the distance from the point to the sphere's center
+        2. If the distance is less than or equal to the radius, the point is inside
+        3. If the distance is greater than the radius, the point is outside
+        
+        Parameters (what we give to the function):
+            point_x: The x position of the point we want to check
+            point_y: The y position of the point we want to check
+            point_z: The z position of the point we want to check
             
-        Returns:
-            True if point is inside sphere, False otherwise
+        Returns (what the function gives back):
+            True if the point is inside the sphere
+            False if the point is outside the sphere
+        
+        Mathematical explanation:
+        - We use the 3D distance formula: distance² = (x₂-x₁)² + (y₂-y₁)² + (z₂-z₁)²
+        - We compare distance² with radius² (we use squared values to avoid calculating 
+          square roots, which makes the code faster)
+        - If distance² ≤ radius², the point is inside or on the surface
         """
-        distance_squared = ((point_x - self.x)**2 + 
-                          (point_y - self.y)**2 + 
-                          (point_z - self.z)**2)
+
+
+        # Calculate the squared distance from the point to the sphere's center
+        # We subtract each coordinate of the sphere's center from the point's coordinates
+        # Then we square each difference and add them together
+        distance_squared = ((point_x - self.x)**2 + # (x difference)²
+                          (point_y - self.y)**2 +   # (y difference)²
+                          (point_z - self.z)**2)    # (z difference)²
+        
+        # Check if the squared distance is less than or equal to squared radius
+        # We use <= (less than or equal) to include points exactly on the surface
+        # This returns True (inside) or False (outside)
         return distance_squared <= self.radius**2
     
     def volume(self) -> float:
-        """Calculate exact volume of the sphere."""
+        """
+        We created this function to calculate the exact volume of the sphere.
+        
+        The volume formula for a sphere is: V = (4/3) × π × r³
+        where r is the radius
+        
+        Returns:
+            The volume of the sphere in cubic Angstroms (Å³)
+        
+        Example: A sphere with radius 2 Å has volume ≈ 33.5 Å³
+        """
+        # Apply the sphere volume formula
+        # (4.0 / 3.0) is the fraction 4/3
+        # np.pi is the number pi (≈ 3.14159...)
+        # self.radius**3 means radius × radius × radius (radius cubed)
         return (4.0 / 3.0) * np.pi * self.radius**3
     
     def __repr__(self):
+        """
+        We created this function to show information about our sphere in a readable way.
+        When we print a sphere, Python uses this function to display it nicely.
+        """
+        # If the sphere has an atom type, we add it to the display
+        # Otherwise, we show an empty string (nothing)
         atom_str = f", {self.atom_type}" if self.atom_type else ""
+
+        # Create a nice text representation showing the sphere's properties
+        # The :.2f means "show 2 digits after the decimal point"
         return (f"Sphere(center=({self.x:.2f}, {self.y:.2f}, {self.z:.2f}), "
                 f"radius={self.radius:.2f}{atom_str})")
 
