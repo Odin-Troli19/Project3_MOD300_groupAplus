@@ -1,27 +1,6 @@
-"""
-DNA Volume and Accessible Volume Analysis using Monte Carlo Methods
-MOD300 - Assignment 3
-
-This module contains functions and classes for:
-1. Calculating DNA molecular volume using Monte Carlo simulation
-2. Calculating accessible volume using random walk methods
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import Tuple, List, Optional
-
-
-# ============================================================================
-# TOPIC 1: DNA Volume Calculation via Monte Carlo
-# ============================================================================
-
-
-import numpy as np
-import matplotlib.pyplot as plt
-from typing import Tuple, List, Optional
-
-# TOPIC 1
 
 class SimulationBox:
     """
