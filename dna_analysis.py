@@ -318,24 +318,61 @@ def create_random_sphere(box: SimulationBox,
 def count_points_in_spheres(points: np.ndarray, 
                             spheres: List[Sphere]) -> int:
     """
-    Count how many points fall inside any of the spheres.
+    We created this function to count how many random points are inside any of the spheres.
+    This is the key step in our Monte Carlo method for calculating volume!
     
-    Parameters:
-        points: Array of shape (n_points, 3) with point coordinates
-        spheres: List of Sphere objects
+    How it works:
+    1. We look at each random point one by one
+    2. For each point, we check if it's inside any of the spheres
+    3. If a point is inside at least one sphere, we count it (only once)
+    4. We return the total count
+    
+    Parameters (what we give to the function):
+        points: A numpy array of shape (n_points, 3) containing all our random points
+                Each row is [x, y, z] coordinates of one point
+        spheres: A list containing all the Sphere objects we want to check
         
-    Returns:
-        Number of points inside at least one sphere
+    Returns (what the function gives back):
+        An integer: the number of points that are inside at least one sphere
+        
+    Example: If we throw 10,000 random points and 3,000 land inside the spheres,
+             this function returns 3,000
+    
+    Important: If a point is inside multiple overlapping spheres, we only count it ONCE.
+               This is correct because we want to know if the point is inside "any DNA atom",
+               not "how many DNA atoms" it's inside.
     """
+
+    # Start with a counter at zero
+    # We will increase this counter each time we find a point inside a sphere
     n_inside = 0
     
+    # Loop through each random point
+    # "for point in points" means: take each row from the points array one by one
     for point in points:
+        # Extract the x, y, z coordinates from this point
+        # This unpacks the array [x, y, z] into three separate variables
         px, py, pz = point
+
+        # Check if this point is inside any of the spheres
+        # We go through each sphere in our list
         for sphere in spheres:
+
+            # Use the sphere's is_point_inside function to check
+            # This returns True if the point is inside, False if outside
             if sphere.is_point_inside(px, py, pz):
+
+                # The point is inside this sphere!
+                # Increase our counter by 1
                 n_inside += 1
-                break  # Count each point only once
+
+                # Use "break" to stop checking other spheres
+                # We already found that this point is inside, so we don't need
+                # to check the remaining spheres. This makes the code faster
+                # and ensures we count each point only once.
+                break  # Exit the inner loop and move to the next point
     
+    # Return the total number of points we found inside the spheres
     return n_inside
 
 # Took inspiration from the function 
