@@ -1,3 +1,21 @@
+"""
+DNA Volume and Accessible Volume Analysis using Monte Carlo Methods
+MOD300 - Assignment 3
+
+This module contains functions and classes for:
+1. Calculating DNA molecular volume using Monte Carlo simulation
+2. Calculating accessible volume using random walk methods
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+from typing import Tuple, List, Optional
+
+
+# ============================================================================
+# TOPIC 1: DNA Volume Calculation via Monte Carlo
+# ============================================================================
+
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -67,3 +85,637 @@ class SimulationBox:
                 f"Volume={self.volume:.2f} Å³)")
     
 
+
+class Sphere:
+    
+    """
+    We created this class to represent a sphere (a perfect ball shape) in 3D space.
+    In our project, each sphere represents one atom in the DNA molecule.
+      Attributes:
+        x, y, z: Center coordinates (Angstrom)
+        radius: Sphere radius (Angstrom)
+        atom_type: Optional atom type identifier
+    
+    This class stores information about:
+        x, y, z: The position of the sphere's center in 3D space (in Angstrom units)
+        radius: How big the sphere is - distance from center to surface (in Angstrom)
+        atom_type: What kind of atom this sphere represents (optional)
+                   Examples: 'H' for Hydrogen, 'O' for Oxygen, 'C' for Carbon
+    """
+    
+    def __init__(self, x: float, y: float, z: float, 
+                 radius: float, atom_type: Optional[str] = None):
+        """
+        Initialize a sphere.
+        
+        Parameters:
+            x, y, z: Center coordinates in Angstrom
+            radius: Sphere radius in Angstrom
+            atom_type: Optional atom type (e.g., 'H', 'O', 'C')
+        """
+        """
+        We created this initialization function to set up a new sphere.
+        When we create a sphere, we need to tell it where it is and how big it is.
+        
+        Parameters (what information we give to create the sphere):
+            x, y, z: Three numbers that tell us where the center of the sphere is located
+                     - x: left/right position
+                     - y: front/back position  
+                     - z: up/down position
+                     (All measured in Angstrom units)
+            
+            radius: One number that tells us how big the sphere is
+                    This is the distance from the center to the edge of the sphere
+                    (Measured in Angstrom units)
+            
+            atom_type: Optional text that tells us what type of atom this is
+                       We write "Optional" because we don't always need to provide this
+                       The "= None" means if we don't give an atom type, it will be None
+        
+        Example: Sphere(5.0, 3.0, 2.0, 1.2, 'H') creates a Hydrogen atom
+                 at position (5, 3, 2) with radius 1.2 Angstroms
+        """
+        # We store the x position (left/right) of the sphere's center
+        self.x = x
+
+        # We store the y position (front/back) of the sphere's center
+        self.y = y
+
+        # We store the z position (up/down) of the sphere's center
+        self.z = z
+
+        # We store how big the sphere is (its radius)
+        # The radius is the distance from the center to any point on the surface
+        self.radius = radius
+
+        # We store what type of atom this sphere represents
+        # This could be 'H' (Hydrogen), 'O' (Oxygen), 'C' (Carbon), etc.
+        # If no atom type is given, this will be None
+        self.atom_type = atom_type
+
+
+
+class Sphere:
+    """
+    Represents a sphere in 3D space (e.g., an atom).
+    
+    Attributes:
+        x, y, z: Center coordinates (Angstrom)
+        radius: Sphere radius (Angstrom)
+        atom_type: Optional atom type identifier
+    """
+    
+    def __init__(self, x: float, y: float, z: float, 
+                 radius: float, atom_type: Optional[str] = None):
+        """
+        Initialize a sphere.
+        
+        Parameters:
+            x, y, z: Center coordinates in Angstrom
+            radius: Sphere radius in Angstrom
+            atom_type: Optional atom type (e.g., 'H', 'O', 'C')
+        """
+        self.x = x
+        self.y = y
+        self.z = z
+        self.radius = radius
+        self.atom_type = atom_type
+    
+    def is_point_inside(self, point_x: float, point_y: float, 
+                       point_z: float) -> bool:
+        """
+        Check if a point is inside the sphere.
+        
+        Parameters:
+            point_x, point_y, point_z: Coordinates of point to test
+            
+        Returns:
+            True if point is inside sphere, False otherwise
+        """
+        distance_squared = ((point_x - self.x)**2 + 
+                          (point_y - self.y)**2 + 
+                          (point_z - self.z)**2)
+        return distance_squared <= self.radius**2
+    
+    def volume(self) -> float:
+        """Calculate exact volume of the sphere."""
+        return (4.0 / 3.0) * np.pi * self.radius**3
+    
+    def __repr__(self):
+        atom_str = f", {self.atom_type}" if self.atom_type else ""
+        return (f"Sphere(center=({self.x:.2f}, {self.y:.2f}, {self.z:.2f}), "
+                f"radius={self.radius:.2f}{atom_str})")
+
+
+def generate_random_points(box: SimulationBox, n_points: int) -> np.ndarray:
+    """
+    Generate random points uniformly distributed in the simulation box.
+    
+    Parameters:
+        box: SimulationBox object defining the boundaries
+        n_points: Number of random points to generate
+        
+    Returns:
+        Array of shape (n_points, 3) with [x, y, z] coordinates
+    """
+    x_points = np.random.uniform(box.x_min, box.x_max, n_points)
+    y_points = np.random.uniform(box.y_min, box.y_max, n_points)
+    z_points = np.random.uniform(box.z_min, box.z_max, n_points)
+    
+    return np.column_stack([x_points, y_points, z_points])
+
+
+def create_random_sphere(box: SimulationBox, 
+                        min_radius: float = 1.0, 
+                        max_radius: float = 5.0) -> Sphere:
+    """
+    Create a sphere with random position and size within the box.
+    
+    Parameters:
+        box: SimulationBox where sphere should be placed
+        min_radius: Minimum sphere radius (Angstrom)
+        max_radius: Maximum sphere radius (Angstrom)
+        
+    Returns:
+        Sphere object with random position and radius
+    """
+    # Generate random position
+    x = np.random.uniform(box.x_min, box.x_max)
+    y = np.random.uniform(box.y_min, box.y_max)
+    z = np.random.uniform(box.z_min, box.z_max)
+    
+    # Generate random radius
+    radius = np.random.uniform(min_radius, max_radius)
+    
+    return Sphere(x, y, z, radius)
+
+
+def count_points_in_spheres(points: np.ndarray, 
+                            spheres: List[Sphere]) -> int:
+    """
+    Count how many points fall inside any of the spheres.
+    
+    Parameters:
+        points: Array of shape (n_points, 3) with point coordinates
+        spheres: List of Sphere objects
+        
+    Returns:
+        Number of points inside at least one sphere
+    """
+    n_inside = 0
+    
+    for point in points:
+        px, py, pz = point
+        for sphere in spheres:
+            if sphere.is_point_inside(px, py, pz):
+                n_inside += 1
+                break  # Count each point only once
+    
+    return n_inside
+
+# Took inspiration from the function 
+# Minimal MC hit-and-miss (from class-004)
+# def monte_carlo_volume(from class-004)
+# Where found: MC_area_volume_central_theorem.ipynb cells 3-5; class-004 slide "MC4all"
+
+def monte_carlo_volume(box: SimulationBox, 
+                       spheres: List[Sphere], 
+                       n_points: int) -> Tuple[float, float]:
+    """
+    Calculate volume of spheres using Monte Carlo integration.
+    
+    Parameters:
+        box: SimulationBox for sampling
+        spheres: List of Sphere objects
+        n_points: Number of random points to sample
+        
+    Returns:
+        Tuple of (estimated_volume, fraction_inside)
+    """
+    points = generate_random_points(box, n_points)
+    n_inside = count_points_in_spheres(points, spheres)
+    
+    fraction_inside = n_inside / n_points
+    estimated_volume = fraction_inside * box.volume
+    
+    return estimated_volume, fraction_inside
+
+
+def calculate_pi_from_sphere(n_points: int, radius: float = 1.0) -> float:
+    """
+    Calculate pi using Monte Carlo method with a sphere.
+    
+    Parameters:
+        n_points: Number of random points to use
+        radius: Radius of sphere (default 1.0)
+        
+    Returns:
+        Estimated value of pi
+    """
+    # Create a box that contains the sphere
+    box = SimulationBox((-radius, radius), (-radius, radius), (-radius, radius))
+    sphere = Sphere(0, 0, 0, radius)
+    
+    # Monte Carlo sampling
+    volume_estimate, _ = monte_carlo_volume(box, [sphere], n_points)
+    
+    # V_sphere = (4/3) * pi * r^3
+    # pi = 3 * V_sphere / (4 * r^3)
+    pi_estimate = 3 * volume_estimate / (4 * radius**3)
+    
+    return pi_estimate
+
+
+# Atomic radii dictionary (in picometers, will convert to Angstrom)
+ATOMIC_RADII_PM = {
+    'H': 120,  # Hydrogen
+    'C': 170,  # Carbon
+    'N': 155,  # Nitrogen
+    'O': 152,  # Oxygen
+    'P': 180,  # Phosphorus
+}
+
+def pm_to_angstrom(pm: float) -> float:
+    """Convert picometers to Angstrom."""
+    return pm / 100.0
+
+
+def read_dna_coordinates(filename: str) -> List[Sphere]:
+    """
+    Read DNA atomic coordinates from file and create Sphere objects.
+    
+    File format: atom_type  x  y  z (coordinates in Angstrom)
+    
+    Parameters:
+        filename: Path to coordinate file
+        
+    Returns:
+        List of Sphere objects representing atoms
+    """
+    spheres = []
+    
+    with open(filename, 'r', encoding='utf-8') as f:
+        for line in f:
+            parts = line.strip().split()
+            if len(parts) >= 4:
+                atom_type = parts[0]
+                x = float(parts[1])
+                y = float(parts[2])
+                z = float(parts[3])
+                
+                # Get atomic radius (convert from pm to Angstrom)
+                radius_pm = ATOMIC_RADII_PM.get(atom_type, 170)  # Default to C
+                radius = pm_to_angstrom(radius_pm)
+                
+                spheres.append(Sphere(x, y, z, radius, atom_type))
+    
+    return spheres
+
+
+def get_bounding_box(spheres: List[Sphere], 
+                     padding: float = 5.0) -> SimulationBox:
+    """
+    Create a simulation box that contains all spheres with padding.
+    
+    Parameters:
+        spheres: List of Sphere objects
+        padding: Extra space around molecules (Angstrom)
+        
+    Returns:
+        SimulationBox that contains all spheres
+    """
+    # Find min/max coordinates considering sphere radii
+    x_coords = [s.x for s in spheres]
+    y_coords = [s.y for s in spheres]
+    z_coords = [s.z for s in spheres]
+    radii = [s.radius for s in spheres]
+    
+    x_min = min(x_coords) - max(radii) - padding
+    x_max = max(x_coords) + max(radii) + padding
+    y_min = min(y_coords) - max(radii) - padding
+    y_max = max(y_coords) + max(radii) + padding
+    z_min = min(z_coords) - max(radii) - padding
+    z_max = max(z_coords) + max(radii) + padding
+    
+    return SimulationBox((x_min, x_max), (y_min, y_max), (z_min, z_max))
+
+
+def convergence_analysis(box: SimulationBox, 
+                         spheres: List[Sphere],
+                         n_points_list: List[int],
+                         n_repeats: int = 5) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Analyze convergence of Monte Carlo volume calculation.
+    
+    Parameters:
+        box: SimulationBox for sampling
+        spheres: List of Sphere objects
+        n_points_list: List of different n_points to test
+        n_repeats: Number of repetitions for each n_points
+        
+    Returns:
+        Tuple of (mean_volumes, std_volumes) for each n_points
+    """
+    mean_volumes = []
+    std_volumes = []
+    
+    for n_points in n_points_list:
+        volumes = []
+        for _ in range(n_repeats):
+            vol, _ = monte_carlo_volume(box, spheres, n_points)
+            volumes.append(vol)
+        
+        mean_volumes.append(np.mean(volumes))
+        std_volumes.append(np.std(volumes))
+    
+    return np.array(mean_volumes), np.array(std_volumes)
+
+
+# ============================================================================
+# TOPIC 2: Random Walk for Accessible Volume
+# ============================================================================
+
+class RandomWalker:
+    """
+    Represents a random walker in 3D space.
+    
+    Attributes:
+        position: Current position [x, y, z]
+        trajectory: History of positions
+        step_size: Size of each random step
+    """
+    
+    def __init__(self, start_position: np.ndarray, step_size: float = 1.0):
+        """
+        Initialize a random walker.
+        
+        Parameters:
+            start_position: Starting [x, y, z] coordinates
+            step_size: Size of each random step (Angstrom)
+        """
+        self.position = np.array(start_position, dtype=float)
+        self.trajectory = [self.position.copy()]
+        self.step_size = step_size
+    
+    def take_step(self):
+        """Take one random step in 3D space."""
+        # Random direction: choose uniformly from 6 directions (+/- x, y, z)
+        direction = np.random.randint(0, 6)
+        
+        step = np.zeros(3)
+        if direction == 0:
+            step[0] = self.step_size
+        elif direction == 1:
+            step[0] = -self.step_size
+        elif direction == 2:
+            step[1] = self.step_size
+        elif direction == 3:
+            step[1] = -self.step_size
+        elif direction == 4:
+            step[2] = self.step_size
+        else:  # direction == 5
+            step[2] = -self.step_size
+        
+        self.position += step
+        self.trajectory.append(self.position.copy())
+    
+    def is_inside_spheres(self, spheres: List[Sphere]) -> bool:
+        """
+        Check if current position is inside any sphere.
+        
+        Parameters:
+            spheres: List of Sphere objects to check
+            
+        Returns:
+            True if inside any sphere, False otherwise
+        """
+        px, py, pz = self.position
+        for sphere in spheres:
+            if sphere.is_point_inside(px, py, pz):
+                return True
+        return False
+
+
+def generate_random_walkers(n_walkers: int, 
+                            box: SimulationBox,
+                            step_size: float = 1.0) -> List[RandomWalker]:
+    """
+    Generate multiple random walkers at random starting positions.
+    
+    Parameters:
+        n_walkers: Number of walkers to create
+        box: SimulationBox for initial positions
+        step_size: Step size for each walker
+        
+    Returns:
+        List of RandomWalker objects
+    """
+    walkers = []
+    for _ in range(n_walkers):
+        start_x = np.random.uniform(box.x_min, box.x_max)
+        start_y = np.random.uniform(box.y_min, box.y_max)
+        start_z = np.random.uniform(box.z_min, box.z_max)
+        
+        walker = RandomWalker([start_x, start_y, start_z], step_size)
+        walkers.append(walker)
+    
+    return walkers
+
+
+def random_walk_fast(n_walkers: int,
+                     n_steps: int,
+                     box: SimulationBox,
+                     step_size: float = 1.0) -> np.ndarray:
+    """
+    Fast vectorized implementation of random walk for multiple walkers.
+    
+    Parameters:
+        n_walkers: Number of walkers
+        n_steps: Number of steps per walker
+        box: SimulationBox for initial positions
+        step_size: Step size for each walker
+        
+    Returns:
+        Array of shape (n_walkers, n_steps+1, 3) with all trajectories
+    """
+    # Initialize positions
+    positions = np.random.uniform(
+        low=[box.x_min, box.y_min, box.z_min],
+        high=[box.x_max, box.y_max, box.z_max],
+        size=(n_walkers, 3)
+    )
+    
+    # Store all trajectories
+    trajectories = np.zeros((n_walkers, n_steps + 1, 3))
+    trajectories[:, 0, :] = positions
+    
+    # Generate all random steps at once
+    # Random directions: 0-5 for +/- x, y, z
+    directions = np.random.randint(0, 6, size=(n_walkers, n_steps))
+    
+    # Convert directions to steps
+    for step in range(n_steps):
+        step_vectors = np.zeros((n_walkers, 3))
+        
+        # +x direction (0)
+        mask = directions[:, step] == 0
+        step_vectors[mask, 0] = step_size
+        
+        # -x direction (1)
+        mask = directions[:, step] == 1
+        step_vectors[mask, 0] = -step_size
+        
+        # +y direction (2)
+        mask = directions[:, step] == 2
+        step_vectors[mask, 1] = step_size
+        
+        # -y direction (3)
+        mask = directions[:, step] == 3
+        step_vectors[mask, 1] = -step_size
+        
+        # +z direction (4)
+        mask = directions[:, step] == 4
+        step_vectors[mask, 2] = step_size
+        
+        # -z direction (5)
+        mask = directions[:, step] == 5
+        step_vectors[mask, 2] = -step_size
+        
+        positions += step_vectors
+        trajectories[:, step + 1, :] = positions
+    
+    return trajectories
+
+
+def accessible_volume_random_walk(spheres: List[Sphere],
+                                 box: SimulationBox,
+                                 n_walkers: int = 1000,
+                                 n_steps: int = 1000,
+                                 step_size: float = 0.5) -> float:
+    """
+    Calculate accessible volume using random walk method.
+    
+    Strategy: Start walkers at random positions. If they enter a sphere
+    (DNA atom), mark that position as inaccessible. Calculate fraction
+    of accessible space.
+    
+    Parameters:
+        spheres: List of Sphere objects (DNA atoms)
+        box: SimulationBox for sampling
+        n_walkers: Number of random walkers
+        n_steps: Number of steps per walker
+        step_size: Step size (Angstrom)
+        
+    Returns:
+        Estimated accessible volume (Angstrom^3)
+    """
+    # Generate trajectories
+    trajectories = random_walk_fast(n_walkers, n_steps, box, step_size)
+    
+    # Count accessible positions
+    n_accessible = 0
+    n_total = 0
+    
+    for walker_traj in trajectories:
+        for position in walker_traj:
+            n_total += 1
+            px, py, pz = position
+            
+            # Check if position is inside any sphere
+            inside = False
+            for sphere in spheres:
+                if sphere.is_point_inside(px, py, pz):
+                    inside = True
+                    break
+            
+            if not inside:
+                n_accessible += 1
+    
+    # Calculate accessible volume
+    fraction_accessible = n_accessible / n_total
+    accessible_vol = fraction_accessible * box.volume
+    
+    return accessible_vol
+
+
+# ============================================================================
+# Visualization Functions
+# ============================================================================
+
+def plot_convergence(n_points_list: List[int],
+                    mean_volumes: np.ndarray,
+                    std_volumes: np.ndarray,
+                    true_volume: Optional[float] = None,
+                    title: str = "Monte Carlo Convergence"):
+    """
+    Plot convergence of Monte Carlo volume calculation.
+    
+    Parameters:
+        n_points_list: List of n_points values
+        mean_volumes: Mean volumes for each n_points
+        std_volumes: Standard deviations for each n_points
+        true_volume: Optional true volume for comparison
+        title: Plot title
+    """
+    plt.figure(figsize=(10, 6))
+    
+    plt.errorbar(n_points_list, mean_volumes, yerr=std_volumes,
+                marker='o', capsize=5, label='MC estimate')
+    
+    if true_volume is not None:
+        plt.axhline(y=true_volume, color='r', linestyle='--',
+                   label=f'True volume = {true_volume:.2f} Å³')
+    
+    plt.xlabel('Number of Points')
+    plt.ylabel('Volume (Å³)')
+    plt.title(title)
+    plt.xscale('log')
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_fraction_vs_points(n_points_list: List[int],
+                           fractions: List[float],
+                           title: str = "Fraction of Points Inside"):
+    """
+    Plot fraction of points inside vs number of points.
+    
+    Parameters:
+        n_points_list: List of n_points values
+        fractions: Fraction of points inside for each n_points
+        title: Plot title
+    """
+    plt.figure(figsize=(10, 6))
+    
+    plt.plot(n_points_list, fractions, marker='o')
+    
+    plt.xlabel('Number of Points')
+    plt.ylabel('Fraction Inside')
+    plt.title(title)
+    plt.xscale('log')
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+
+if __name__ == "__main__":
+    # Simple test
+    print("DNA Analysis Module")
+    print("=" * 50)
+    
+    # Test simulation box
+    box = SimulationBox((-10, 10), (-10, 10), (-10, 10))
+    print(f"\n{box}")
+    
+    # Test sphere
+    sphere = Sphere(0, 0, 0, 5.0, 'C')
+    print(f"\n{sphere}")
+    print(f"Sphere volume: {sphere.volume():.2f} Å³")
+    
+    # Test point generation
+    points = generate_random_points(box, 10)
+    print(f"\nGenerated {len(points)} random points")
+    
+    print("\nModule loaded successfully!")
