@@ -175,6 +175,70 @@ class Sphere:
         - If distance² ≤ radius², the point is inside or on the surface
         """
 
+# Monte Carlo system for volume fraction of a single sphere 
+
+
+class MonteCarloSystem:
+    """
+    Helper-klasse for å beregne volumfraksjon til én kule i en boks
+    ved Monte Carlo-sampling.
+
+    Den støtter både:
+      - sphere som dict: {"center": np.array([x,y,z]), "radius": r}
+      - sphere som Sphere-objekt fra denne fila.
+    """
+
+    def __init__(self, sphere, box_size: np.ndarray):
+        # Hent senter og radius uansett type
+        if isinstance(sphere, Sphere):
+            center = np.array([sphere.x, sphere.y, sphere.z], dtype=float)
+            radius = float(sphere.radius)
+        else:
+            center = np.array(sphere["center"], dtype=float)
+            radius = float(sphere["radius"])
+
+        self.center = center
+        self.radius = radius
+        self.box_size = np.array(box_size, dtype=float)
+
+    def _random_point(self) -> np.ndarray:
+        """
+        Trekker ett tilfeldig punkt uniformt i boksen.
+        Antar boks definert fra (0,0,0) til box_size.
+        """
+        return np.random.uniform(low=0.0, high=self.box_size, size=3)
+
+    def _inside_sphere(self, p: np.ndarray) -> bool:
+        """
+        Sjekker om punkt p ligger inne i kula.
+        """
+        return np.sum((p - self.center) ** 2) <= self.radius ** 2
+
+    def calculate_volume_fraction(self, n_points: int):
+        """
+        Monte Carlo-estimat på volumfraksjonen til kula i boksen.
+
+        Args:
+            n_points: totalt antall tilfeldige punkt.
+
+        Returns:
+            fraction: endelig fraksjon av punkt som havner i kula.
+            fractions: liste med fraksjonen ved hver 100. punkt
+                       (brukes til konvergensplott).
+        """
+        inside = 0
+        fractions = []
+
+        for i in range(1, n_points + 1):
+            p = self._random_point()
+            if self._inside_sphere(p):
+                inside += 1
+
+            if i % 100 == 0:
+                fractions.append(inside / i)
+
+        fraction = inside / n_points
+        return fraction, fractions
 
         # Calculate the squared distance from the point to the sphere's center
         # We subtract each coordinate of the sphere's center from the point's coordinates
